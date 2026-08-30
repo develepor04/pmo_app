@@ -7,7 +7,11 @@ const config: CapacitorConfig = {
 
   server: {
     url: 'https://app.pmo.thetadynamics.io',
-    cleartext: false
+    cleartext: false,
+    allowNavigation: [
+      'https://app.pmo.thetadynamics.io',
+      'https://pmo-backend.thetadynamics.io',
+    ],
   }
 };
 

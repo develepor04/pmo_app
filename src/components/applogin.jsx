@@ -31,13 +31,29 @@ const AppLogin = () => {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/login`,
+        { email, password },
+        { timeout: 20000 }
+      );
       const { token, user } = response.data;
-      const decoded = jwtDecode(token);
+      if (!token || !user) {
+        throw new Error("Login succeeded but the server did not return a session.");
+      }
+      let decoded = {};
+      try {
+        decoded = jwtDecode(token);
+      } catch {
+        decoded = {};
+      }
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-      if (user?.id || decoded?.id) localStorage.setItem("user_id", String(user?.id || decoded?.id));
-      if (user?.company_id || decoded?.company_id) localStorage.setItem("companyId", String(user?.company_id || decoded?.company_id));
+      if (user?.id || decoded?.id || decoded?.user_id) {
+        localStorage.setItem("user_id", String(user?.id || decoded?.id || decoded?.user_id));
+      }
+      if (user?.company_id || decoded?.company_id) {
+        localStorage.setItem("companyId", String(user?.company_id || decoded?.company_id));
+      }
       subscribeToPush(token).catch(() => {});
       if (user.role === "admin") {
         showNotification({ message: `Admin panel ready — ${user.name || "Administrator"}.`, type: "success" });
@@ -47,7 +63,11 @@ const AppLogin = () => {
         setTimeout(() => navigate("/deviation-dashboard"), 700);
       }
     } catch (err) {
-      showNotification({ message: err.response?.data?.error || err.response?.data?.message || "Couldn't sign you in — check your credentials.", type: "error" });
+      const networkFail = err.code === "ECONNABORTED" || err.code === "ERR_NETWORK" || !err.response;
+      const message = networkFail
+        ? "Cannot reach the login server. Check your connection and try again."
+        : (err.response?.data?.error || err.response?.data?.message || err.message || "Couldn't sign you in — check your credentials.");
+      showNotification({ message, type: "error" });
     } finally {
       setIsLoading(false);
     }

@@ -11,7 +11,7 @@ export default defineConfig({
 
   define: {
     'import.meta.env.VITE_BACKEND_URL': JSON.stringify(
-      process.env.VITE_BACKEND_URL || 'https://pmo-backend.thetadynamics.io'
+      process.env.VITE_BACKEND_URL || 'https://pmo-backend.thetadynamics.io/api'
     )
   }
 })
